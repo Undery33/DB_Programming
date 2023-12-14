@@ -1,0 +1,123 @@
+CREATE OR REPLACE PACKAGE member_mg
+IS
+PROCEDURE find_sex( v_name member.name%TYPE );
+PROCEDURE find_id (
+	v_name	member.name%TYPE,
+	v_no	member.jumin%TYPE );
+PROCEDURE find_pwd (
+	v_id IN member.id%TYPE,
+	v_an IN member.an_key_dap%TYPE );
+END member_mg;
+/
+
+CREATE OR REPLACE PACKAGE BODY member_mg AS
+
+-- 성별 찾기
+PROCEDURE find_sex (v_name member.name%TYPE)
+IS
+	v_gender	CHAR(6);
+	v_count		NUMBER := 0;
+	exc_noname	EXCEPTION;
+	exc_many	EXCEPTION;
+BEGIN
+	SELECT count(*) INTO v_count
+	FROM member
+	WHERE name = v_name;
+
+	IF v_count = 0 
+	  THEN RAISE exc_noname;
+	ELSIF v_count >= 2 
+	  THEN RAISE exc_many;
+	ELSE
+		SELECT CASE WHEN SUBSTR(jumin, 7, 1) IN (1, 3)
+			    THEN 'MAN'
+			    ELSE 'WOMNA'
+			    END
+		INTO v_gender
+		FROM member
+		WHERE name = v_name;
+		DBMS_OUTPUT.PUT_LINE(v_name||' ''s gender is '||v_gender);
+	END IF;
+EXCEPTION
+	WHEN exc_noname 
+	  THEN RAISE_APPLICATION_ERROR(-20001, 'No Name!');
+	WHEN exc_many 
+	  THEN RAISE_APPLICATION_ERROR(-2002, 'Many Name!');
+END find_sex;
+
+-- ID 찾기
+PROCEDURE find_id (
+	v_name		member.name%TYPE,
+	v_no		member.jumin%TYPE )
+IS
+	v_count		NUMBER := 0;
+	v_count2 	NUMBER := 0;
+	v_id2 		member.id%TYPE;
+	exc_noname 	EXCEPTION;
+	exc_nojumin 	EXCEPTION;
+BEGIN
+	SELECT count(*) INTO v_count
+	FROM member
+	WHERE name = v_name;
+
+	IF v_count = 0 
+	  THEN RAISE exc_noname;
+	ELSE
+		SELECT count(*) INTO v_count2
+		FROM member
+		WHERE jumin = v_no;
+
+		IF v_count2 = 0 
+	  	  THEN RAISE exc_nojumin;
+		ELSE
+			SELECT id INTO v_id2
+			FROM member
+			WHERE name = v_name;
+		END IF;
+	END IF;
+	DBMS_OUTPUT.PUT_LINE(v_name||' ''s ID is '||v_id2);
+EXCEPTION
+	WHEN exc_noname 
+	  THEN RAISE_APPLICATION_ERROR(-20001, 'No Name!');
+	WHEN exc_nojumin 
+	  THEN RAISE_APPLICATION_ERROR(-20002, 'No Number!');
+END find_id;
+
+-- 패스워드 찾기
+PROCEDURE find_pwd (
+	v_id IN 	member.id%TYPE,
+	v_an IN 	member.an_key_dap%TYPE )
+IS
+	v_count 	NUMBER := 0;
+	v_an_dap 	member.an_key_dap%TYPE;
+	v_pw 		member.passwd%TYPE;
+	exc_noid 	EXCEPTION;
+	exc_noan 	EXCEPTION;
+BEGIN
+	SELECT count(*) INTO v_count
+	FROM member
+	WHERE id = v_id;
+	
+	IF v_count = 0 
+	  THEN RAISE exc_noid;
+	ELSE
+		SELECT an_key_dap INTO v_an_dap
+		FROM member
+		WHERE id = v_id;
+
+		IF v_an_dap = v_an THEN
+			SELECT passwd INTO v_pw
+			FROM member
+			WHERE id = v_id;
+		ELSE RAISE exc_noan;
+		END IF;
+	END IF;
+	DBMS_OUTPUT.PUT_LINE(v_id|| ' ''s password is '||v_pw);
+EXCEPTION
+	WHEN exc_noid 
+	  THEN RAISE_APPLICATION_ERROR(-20003, 'No ID!');
+	WHEN exc_noan 
+	  THEN RAISE_APPLICATION_ERROR(-20004, 'No Answer!');
+END find_pwd;
+END member_mg;
+/

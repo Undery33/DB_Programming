@@ -1,0 +1,41 @@
+/*
+ 프로시저 명: show_emp()
+ 파라미터: deptno
+ 실행: 	show_emp(10)
+	show_emp(20)
+	show_emp(30)
+ 결과:
+	ACCOUNT 부서의 사원은 다음과 같습니다.
+	...
+ 예외처리:
+	show_emp(50)
+	없는 부서입니다.
+*/
+	CREATE OR REPLACE PROCEDURE show_emp(v_deptno NUMBER) IS
+  		v_empno NUMBER(5);
+  		v_ename VARCHAR2(30);
+ 		v_sal NUMBER(6);
+  		v_dname VARCHAR2(30);
+  	CURSOR cur1 IS
+    		SELECT empno, ename, sal
+    		FROM emp
+    		WHERE deptno = v_deptno;
+	BEGIN
+  		SELECT dname INTO v_dname
+  		FROM dept
+  		WHERE deptno = v_deptno; 
+
+  		DBMS_OUTPUT.PUT_LINE(v_dname || ' 부서의 인원은 다음과 같습니다.');
+
+  	  OPEN cur1;
+  	    LOOP
+    		FETCH cur1 INTO v_empno, v_ename, v_sal;
+    		EXIT WHEN cur1%NOTFOUND;
+    		DBMS_OUTPUT.PUT_LINE(v_empno || ' ' || v_ename || ' ' || v_sal);
+  	    END LOOP;
+  	  CLOSE cur1;
+	EXCEPTION
+  		WHEN NO_DATA_FOUND THEN
+    			DBMS_OUTPUT.PUT_LINE('존재하지 않는 부서입니다.');
+	END show_emp;
+	/
